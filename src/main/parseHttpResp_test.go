@@ -15,14 +15,19 @@ var testinputs = []struct {
         {[]byte("www.cnn.com,abc,abc,abc,abc,abc,abc,abc"), false},
         {[]byte("www.cnn.com abc abc abc"), false},
 }
+
+//TODO
+//write mock db insert or use a test db
 	
 func TestParseHttpResp(t *testing.T) {
 	for i, tt := range testinputs {
         err := ParseHttpResp(tt.in, "test") 
 	if err != nil{
-		t.Error("Error in test case number %d", i+1)
-		tt.out = false
+		if tt.out == false{
+			continue
+		}else{
+			t.Error("Error in test case number ", i+1)
 	}
-	tt.out = true
 	}
+}
 }
