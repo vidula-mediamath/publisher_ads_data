@@ -60,20 +60,22 @@ func ExecuteGetOnAdsPage(pubUrl string) ([]byte, error) {
 	return body, err
 }
 
-func ParseHttpResp(body []byte, pubName string) {
+func ParseHttpResp(body []byte, pubName string) error {
 	//db insert happens multiple times for each single record
 	//so getting one db connection and using it for all
 	db, err := storage.NewDBConnection()
 	defer db.Close()
 	if err != nil {
-		return
+		return err
 	}
 	var s1[]string = strings.Split(string(body), "\n")
 	for _,v := range s1{
 		var s[]string = strings.Split(v, ",")
 		if(len(s) >= 3){
-			storage.AddRecordInDB(s, pubName, db) 
+			err := storage.AddRecordInDB(s, pubName, db) 
+			log.Println(err)
 		}
-		// This will only return last error
 	}
+	//this will only return 1 error	
+	return err
 }
