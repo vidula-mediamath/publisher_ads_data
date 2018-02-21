@@ -23,20 +23,21 @@ func TestHttpRes(t *testing.T) {
 	for _, tt := range testtable {
 	resp,err := http.Get(tt.in)
 	if err != nil {
-    		t.Error("test failed for %s", tt.in)
-		tt.out = false
-		continue
+		if tt.out == false {
+			continue
+		}else{
+    			t.Error("test failed for ", tt.in)
+			continue
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-    		t.Error("test failed while reading response for %s", tt.in)
-		tt.out = false
-                continue
+    			t.Error("test failed while reading response for ", tt.in)
+                	continue
 	}
 	if !strings.Contains(string(body), "supply_source_domain"){
-		tt.out = false
+		t.Error("response does not contain supply_source_domain")
                 continue
 	}
-	tt.out = true
 	}
+}
 }
