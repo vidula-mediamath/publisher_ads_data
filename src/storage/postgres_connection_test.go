@@ -3,7 +3,10 @@ package storage
 import	"testing"
 
 func TestDBConnection(t *testing.T){
-	get_db_connection()
+	db,err := GetDbConnection()
+	if err != nil {
+		t.Fatal("Test could not get a db connection")
+	
 	_, err := db.Exec("create database test")
 	if err != nil {
 		t.Error("test failed")

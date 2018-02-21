@@ -3,20 +3,23 @@ package main
 import ("net/http"
 	"log"
 	"encoding/json"
+	"database/sql"
 	"github.com/vidula-mediamath/publisher_ads_data/src/storage"
 	)
 
 func main(){
-	storage.GetDbConnection()
 	http.HandleFunc("/view/", viewHandler)
-	http.HandleFunc("/test/", testHandler)
     	http.ListenAndServe(":8080", nil)
 }
 
 func viewHandler(w http.ResponseWriter, r *http.Request) {
 	pubName := r.URL.Path[6:]
-	//jsonOutput, err := getFromDb(pubName, storage.DbQuery)
-	jsonOutput, err := getFromDb(pubName)
+	db, err := storage.GetDbConnection()
+	if err != nil{
+		w.Write([]byte("can not produce ads data for this publisher"))
+		return
+		}
+	jsonOutput, err := getFromDb(pubName, db)
 	if err != nil {
 		w.Write([]byte("can not produce ads data for this publisher"))
 	}
@@ -25,16 +28,8 @@ func viewHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func testHandler(w http.ResponseWriter, r *http.Request) {
-        w.Write(nil)
-	}
-	
-//type QueryDoer func(pubName string) []map[string]interface{}
-
-//func getFromDb(pubName string, dbQuery QueryDoer) (jsonData []byte, err error){		
-
-func getFromDb(pubName string)([]byte,  error){
-	tableData,err := storage.DbQuery(pubName)
+func getFromDb(pubName string, db *sql.DB)([]byte,  error){
+	tableData,err := storage.DbQuery(pubName, db)
 	if err!= nil {
 		return nil, err
 	}
