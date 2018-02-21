@@ -3,7 +3,6 @@ package main
 import ("net/http"
 	"log"
 	"encoding/json"
-	"database/sql"
 	"github.com/vidula-mediamath/publisher_ads_data/src/storage"
 	)
 
@@ -14,20 +13,24 @@ func main(){
 
 func viewHandler(w http.ResponseWriter, r *http.Request) {
 	pubName := r.URL.Path[6:]
-	db, err := storage.GetDbConnection()
-	if err != nil{
-		w.Write([]byte("can not produce ads data for this publisher"))
-		return
-		}
-	jsonOutput, err := getFromDb(pubName, db)
+	tableData, err := storage.GetFromDB(pubName)
 	if err != nil {
 		w.Write([]byte("can not produce ads data for this publisher"))
+		return
 	}
+
+	//convert output from db query in to json
+	jsonData, err := json.Marshal(tableData)
+        if err != nil {
+                log.Fatal(err)
+		w.Write([]byte("can not produce ads data for this publisher"))
+        }
+
 	w.Header().Set("Content-Type", "application/json")
-        w.Write(jsonOutput)
+        w.Write(jsonData)
 
 }
-
+/*
 func getFromDb(pubName string, db *sql.DB)([]byte,  error){
 	tableData,err := storage.DbQuery(pubName, db)
 	if err!= nil {
@@ -39,3 +42,4 @@ func getFromDb(pubName string, db *sql.DB)([]byte,  error){
   	}
 	return jsonData, err
 }
+*/

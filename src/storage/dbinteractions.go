@@ -5,8 +5,36 @@ import ("log"
 	"database/sql"
 	)
 
+func NewDBConnection() (*sql.DB, error) {
+	db,err := GetDbConnection()
+        if err != nil{
+		log.Println("DB connection Error.")
+		return nil, err
+                        }
+	return db, err
+}
+
+func GetFromDB(pubName string) ([]map[string]interface{}, error){
+	db,err := GetDbConnection()
+	defer db.Close()
+	if err != nil{
+			log.Println("DB connection Error.")
+                        return nil, err
+                        }
+	tableData, err := dbQuery(pubName, db)
+	if err != nil {
+		return nil, err
+	}
+	return tableData, err
+}
+
+func AddRecordInDB(record []string, pubName string, db *sql.DB) error {
+        err := dbInsert(record, pubName, db)
+	return err
+}
+
 //DbQuery will retrieve records from database table for this particular query
-func DbQuery(pubName string, db *sql.DB) ([]map[string]interface{}, error){
+func dbQuery(pubName string, db *sql.DB) ([]map[string]interface{}, error){
 	rows, err := db.Query("SELECT * FROM publisher_ads_data WHERE publisher_name=$1", pubName)
         if err != nil {
                 log.Fatal(err)
@@ -46,7 +74,7 @@ func DbQuery(pubName string, db *sql.DB) ([]map[string]interface{}, error){
 
 
 //DbInsert will insert record in the publisher_ads_data table
-func DbInsert(input []string, pubName string, db *sql.DB) error {
+func dbInsert(input []string, pubName string, db *sql.DB) error {
 	for _, v := range input{
 		v = strings.TrimSpace(v)
 	}
