@@ -10,6 +10,7 @@ var testtable = []struct {
         {"https://yahoo.com/ads.txt", true},
         {"yahoo.com/ads.txt", false},
         {"vidulasabnis.com/ads.txt", false},
+	{"https://golang.org/ads.txt", false},
 }
 
 func TestExecuteGetOnAdsPage(t *testing.T){
