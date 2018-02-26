@@ -2,13 +2,13 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"github.com/vidula-mediamath/publisher_ads_data/src/storage"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
+	//"fmt"
 	"sync"
 )
 
@@ -33,7 +33,7 @@ func main() {
 				log.Println("Error while getting response")
 				return
 			}
-			records, err := ParseHttpResp(body, pubName)
+			records, err := ParseHttpResp(body)
 			if err != nil {
 				log.Println("Error while getting response")
 				return
@@ -67,13 +67,16 @@ func ExecuteGetOnAdsPage(pubUrl string) ([]byte, error) {
 	return body, err
 }
 
-func ParseHttpResp(body []byte, pubName string) ([]storage.Record, error) {
+func ParseHttpResp(body []byte) ([]storage.Record, error) {
 	var FileData []storage.Record
 	var s1 []string = strings.Split(string(body), "\n")
+
 	for _, v := range s1 {
 		var record storage.Record
 		var splitBeforeComment []string = strings.Split(v, "#")
+
 		var splitOnEachComma []string = strings.Split(splitBeforeComment[0], ",")
+
 		if len(splitOnEachComma) >= 3 {
 			domain, err := validateSupplyDomain(splitOnEachComma[0])
 			if err != nil {
@@ -81,19 +84,15 @@ func ParseHttpResp(body []byte, pubName string) ([]storage.Record, error) {
 			}
 			relation, err := validateRelationValue(splitOnEachComma[2])
 			if err != nil {
-				fmt.Println(splitOnEachComma)
-				fmt.Println("before Comment:", splitBeforeComment)
-				fmt.Println("line: ", v)
-				fmt.Println("pubName:", pubName)
 				continue
 			}
 			record.Supply_source_domain = domain
 			record.Id = strings.TrimSpace(splitOnEachComma[1])
 			record.Relationship = relation
+
 			FileData = append(FileData, record)
 		}
 	}
-	fmt.Println(len(FileData))
 	return FileData, nil
 }
 
@@ -114,7 +113,6 @@ func validateRelationValue(input string) (string, error) {
 	case "RESELLER":
 		return input, nil
 	default:
-		fmt.Println("default", input)
 		return "", errors.New("Invalid relation value")
 	}
 }

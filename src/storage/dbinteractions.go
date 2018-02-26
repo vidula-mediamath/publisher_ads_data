@@ -2,7 +2,6 @@ package storage
 
 import (
 	"database/sql"
-	//	"fmt"
 	"log"
 )
 
@@ -91,7 +90,6 @@ func dbQuery(pubName string, db *sql.DB) ([]map[string]interface{}, error) {
 
 //DbInsert will insert record in the publisher_ads_data table
 func dbInsert(record Record, pubName string, db *sql.DB) error {
-	//fmt.Println(record)
 	sqlStatement := `insert into publisher_ads_data (publisher_name, supply_source_domain, id, relationship, comment)
 values($1, $2, $3, $4, $5)`
 	_, err := db.Exec(sqlStatement, pubName, record.Supply_source_domain, record.Id, record.Relationship, "")
