@@ -5,11 +5,26 @@ import (
 	"log"
 )
 
-type Record struct {
+type Record struct{
 	Supply_source_domain string
 	Id                   string
-	Relationship         string
+	Relationship			string
+	Created_on			string
+	Updated_on			string
 }
+//
+//type DataAccessLayer interface {
+//  dbQuery(string) []map[string]interface{}
+//  dbInsert([]Record) error
+//}
+//
+//func (t *TestRecord) dbQuery(string) []TestRecord{} {
+//  return t
+//}
+//
+//func (t *TestDAL) dbInsert([]TestRecord) error {
+//  return err
+//}
 
 func NewDBConnection() (*sql.DB, error) {
 	db, err := GetDbConnection()
@@ -20,7 +35,7 @@ func NewDBConnection() (*sql.DB, error) {
 	return db, err
 }
 
-func GetFromDB(pubName string) ([]map[string]interface{}, error) {
+func GetFromDB(pubName string) ([]Record, error) {
 	db, err := GetDbConnection()
 	defer db.Close()
 	if err != nil {
@@ -50,40 +65,23 @@ func AddRecordsInDB(records []Record, pubName string) error {
 }
 
 //DbQuery will retrieve records from database table for this particular query
-func dbQuery(pubName string, db *sql.DB) ([]map[string]interface{}, error) {
-	rows, err := db.Query("SELECT * FROM publisher_ads_data WHERE publisher_name=$1", pubName)
+func dbQuery(pubName string, db *sql.DB) ([]Record, error) {
+	rows, err := db.Query("SELECT supply_source_domain, id, relationship, created_on, updated_on FROM publisher_ads_data WHERE publisher_name=$1", pubName)
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
 	}
 	defer rows.Close()
-	columns, err := rows.Columns()
-	if err != nil {
-		log.Fatal(err)
-		return nil, err
-	}
-	count := len(columns)
-	tableData := make([]map[string]interface{}, 0)
-	values := make([]interface{}, count)
-	valuePtrs := make([]interface{}, count)
+	tableData := []Record{}
 	for rows.Next() {
-		for i := 0; i < count; i++ {
-			valuePtrs[i] = &values[i]
-		}
-		rows.Scan(valuePtrs...)
-		entry := make(map[string]interface{})
-		for i, col := range columns {
-			var v interface{}
-			val := values[i]
-			b, ok := val.([]byte)
-			if ok {
-				v = string(b)
-			} else {
-				v = val
-			}
-			entry[col] = v
+		entry := Record{}
+		if err := rows.Scan(&entry.Supply_source_domain, &entry.Id, &entry.Relationship, &entry.Created_on, &entry.Updated_on); err != nil {
+			log.Fatal(err)
 		}
 		tableData = append(tableData, entry)
+	}
+	if err := rows.Err(); err != nil {
+		log.Fatal(err)
 	}
 	return tableData, err
 }

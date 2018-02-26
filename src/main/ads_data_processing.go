@@ -76,7 +76,6 @@ func ParseHttpResp(body []byte) ([]storage.Record, error) {
 		var splitBeforeComment []string = strings.Split(v, "#")
 
 		var splitOnEachComma []string = strings.Split(splitBeforeComment[0], ",")
-
 		if len(splitOnEachComma) >= 3 {
 			domain, err := validateSupplyDomain(splitOnEachComma[0])
 			if err != nil {
