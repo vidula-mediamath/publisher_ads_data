@@ -1,7 +1,6 @@
 package main
 
 import ("testing"
-	"encoding/json"
 	"github.com/vidula-mediamath/publisher_ads_data/src/storage")
 
 func fakeDbQueryFunc(pubName string) ([]storage.Record, error) {
@@ -16,9 +15,8 @@ func TestGetResponseFromDB(t *testing.T) {
 		t.Error(err)
 	}
 	expectedOutput, _ := fakeDbQueryFunc("abc")
-	expectedJson,_ := json.Marshal(expectedOutput)
 	
-	if string(expectedJson) != string(responseData){
+	if compareLists(expectedOutput, responseData) != true{
 		t.Error("test failed")
 	}
 }
@@ -49,10 +47,21 @@ func TestEmptyResponses(t *testing.T){
 		
 		//currently with given inputs, control never reaches this point
 		expectedOutput, _ := fakeDbReturnEmpty("abc")
-		expectedJson,_ := json.Marshal(expectedOutput)
 	
-		if string(expectedJson) != string(responseData){
+		if compareLists(expectedOutput, responseData) != true {
 			t.Error("test failed when url path was", v.urlPath)
 		}
 	}
+}
+
+func compareLists(slice1 []storage.Record, slice2 []storage.Record) bool {
+	if len(slice1) != len(slice2) {
+			return false
+	}
+	for i := range slice1 {
+		if slice1[i] != slice2[i] {
+			return false
+			}
+		}
+	return true
 }

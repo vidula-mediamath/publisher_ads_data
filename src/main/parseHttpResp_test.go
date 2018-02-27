@@ -36,14 +36,14 @@ var testinputs = []struct {
 func TestParseHttpResp(t *testing.T) {
 	for _, tt := range testinputs {
         records,_ := ParseHttpResp(tt.in)
-        equal := compareList(records, tt.out)
+        equal := compareLists(records, tt.out)
         if !equal {
 	        	t.Error("Parsing has error, input was", tt.in)
         }
 	}
 }
 
-func compareList(slice1 []storage.Record, slice2 []storage.Record) bool {
+func compareLists(slice1 []storage.Record, slice2 []storage.Record) bool {
 	if len(slice1) != len(slice2) {
 			return false
 	}
