@@ -1,21 +1,58 @@
 package main
 
 import ("testing"
-	"net/http/httptest"
-	"net/http")
+	"encoding/json"
+	"github.com/vidula-mediamath/publisher_ads_data/src/storage")
 
-func TestViewHandler(t *testing.T){
-	inputs := []string{"http://localhost:8080/view/www.yahoo.com",
-		"http://localhost:8080/view/www.vidulasabnis.com",
-		"http://localhost:8080/view/",
-		"http://localhost:8080/"}
-	for _, v := range inputs{
-	req, _ := http.NewRequest("GET", v, nil)
-    	w := httptest.NewRecorder()
-    	viewHandler(w, req)
-    if w.Code != http.StatusOK {
-        t.Errorf("page didn't return %v", http.StatusOK)
-    }
-}	
+func fakeDbQueryFunc(pubName string) ([]storage.Record, error) {
+    return []storage.Record{storage.Record{"www.cnn.com", "21908", "DIRECT", "", ""}, storage.Record{"www.nbc.com", "9010", "DIRECT", "", ""}}, nil
 }
 
+func TestGetResponseFromDB(t *testing.T) {
+	urlPath := "/view/www.nbc.com"
+	
+	responseData, err := getResponseFromDB(urlPath, fakeDbQueryFunc)
+	if err != nil {
+		t.Error(err)
+	}
+	expectedOutput, _ := fakeDbQueryFunc("abc")
+	expectedJson,_ := json.Marshal(expectedOutput)
+	
+	if string(expectedJson) != string(responseData){
+		t.Error("test failed")
+	}
+}
+
+func fakeDbReturnEmpty(pubName string) ([]storage.Record, error) {
+    return []storage.Record{}, nil
+}
+
+var testInputs = []struct {
+	urlPath string
+	expectedFail bool
+}{
+	{"/check/www.nbc.com", true},
+	{"/view/nbc.com", true},
+	{"/view/nbc", true},
+	{"/view/", true},
+}
+
+func TestEmptyResponses(t *testing.T){
+	for _,v := range testInputs{
+		responseData, err := getResponseFromDB(v.urlPath, fakeDbReturnEmpty)
+		if err != nil && v.expectedFail != true{
+			t.Error(err)
+		}else{
+			t.Log(err)
+			continue
+		}
+		
+		//currently with given inputs, control never reaches this point
+		expectedOutput, _ := fakeDbReturnEmpty("abc")
+		expectedJson,_ := json.Marshal(expectedOutput)
+	
+		if string(expectedJson) != string(responseData){
+			t.Error("test failed when url path was", v.urlPath)
+		}
+	}
+}

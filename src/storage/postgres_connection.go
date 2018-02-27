@@ -7,18 +7,10 @@ import (
   _ "github.com/lib/pq"
 )
 
-const (
-  host     = "localhost"
-  port     = 5432
-  user	   = "vsabnis"
-  dbname   = "vsabnis"
-)
-
 //GetDbConnection will obtain postgres connection and pings the db
-func GetDbConnection() (*sql.DB, error) {
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=disable",host, port, user, dbname)
+func GetDbConnection(connectionString string) (*sql.DB, error) {	
 	var db *sql.DB
-	db, err := sql.Open("postgres", psqlInfo)
+	db, err := sql.Open("postgres", connectionString)
 	if err != nil{		
 		return nil, err
 	}

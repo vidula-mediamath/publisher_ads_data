@@ -2,7 +2,15 @@ package storage
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
+)
+
+const (
+  host     = "localhost"
+  port     = 5432
+  user	   = "vsabnis"
+  dbname   = "vsabnis"
 )
 
 type Record struct{
@@ -12,22 +20,15 @@ type Record struct{
 	Created_on			string
 	Updated_on			string
 }
-//
-//type DataAccessLayer interface {
-//  dbQuery(string) []map[string]interface{}
-//  dbInsert([]Record) error
-//}
-//
-//func (t *TestRecord) dbQuery(string) []TestRecord{} {
-//  return t
-//}
-//
-//func (t *TestDAL) dbInsert([]TestRecord) error {
-//  return err
-//}
+
+type DataAccessLayer interface {
+  dbQuery(string) []Record
+  dbInsert([]Record) error
+}
 
 func NewDBConnection() (*sql.DB, error) {
-	db, err := GetDbConnection()
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=disable",host, port, user, dbname)
+	db, err := GetDbConnection(psqlInfo)
 	if err != nil {
 		log.Println("DB connection Error.")
 		return nil, err
@@ -36,7 +37,7 @@ func NewDBConnection() (*sql.DB, error) {
 }
 
 func GetFromDB(pubName string) ([]Record, error) {
-	db, err := GetDbConnection()
+	db, err := NewDBConnection()
 	defer db.Close()
 	if err != nil {
 		log.Println("DB connection Error.")
@@ -50,7 +51,7 @@ func GetFromDB(pubName string) ([]Record, error) {
 }
 
 func AddRecordsInDB(records []Record, pubName string) error {
-	db, err := GetDbConnection()
+	db, err := NewDBConnection()
 	defer db.Close()
 	if err != nil {
 		log.Println("DB connection Error.")
