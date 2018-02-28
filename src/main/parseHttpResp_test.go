@@ -31,6 +31,12 @@ var testinputs = []struct {
         {[]byte("www.cnn.com,abc,direct,abc,abc,abc,abc,abc"), []storage.Record{storage.Record{"www.cnn.com", "abc", "DIRECT", "", ""}}},
         //test for input that is not comma separated
         {[]byte("www.cnn.com abc DIRECT abc"), []storage.Record{}},
+        //test for empty file
+        {[]byte(""), []storage.Record{}},
+        //test for different encodings
+        {[]byte(".com, こんにちは,RESELLER,abc"), []storage.Record{storage.Record{".com", "こんにちは", "RESELLER", "", ""}}},
+        //test for wide range of characters
+        {[]byte(".com, #@$@&*^€¢£¥^€, RESELLER, abc"), []storage.Record{}},
 }
 	
 func TestParseHttpResp(t *testing.T) {
