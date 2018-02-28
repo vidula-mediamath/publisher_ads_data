@@ -4,15 +4,20 @@ import (
 	"errors"
 	"github.com/vidula-mediamath/publisher_ads_data/src/storage"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
+	"log"
 	//"fmt"
 	"sync"
 )
 
 func main() {
+	db, err := storage.NewPostgres()
+	defer db.Close()
+	if err != nil{
+		return
+	}
 	var wg sync.WaitGroup
 	urls := []string{"https://www.yahoo.com/ads.txt", "https://www.cnn.com/ads.txt", "http://www.nytimes.com/ads.txt", "https://www.nbc.com/ads.txt"}
 	for _, url := range urls {
@@ -25,20 +30,19 @@ func main() {
 			// Fetch the URL
 			pubName, err := GetPublisherName(url)
 			if err != nil {
-				log.Println("Invalid url")
 				return
 			}
 			body, err := ExecuteGetOnAdsPage(url)
 			if err != nil {
-				log.Println("Error while getting response")
 				return
 			}
 			records, err := ParseHttpResp(body)
 			if err != nil {
-				log.Println("Error while getting response")
 				return
 			}
-			storage.AddRecordsInDB(records, pubName)
+			dbInsertErrors := db.DBInsert(records, pubName)
+			log.Println(dbInsertErrors)
+			log.Println(err)
 		}(url)
 	}
 	wg.Wait()
@@ -48,7 +52,6 @@ func main() {
 func GetPublisherName(pubUrl string) (string, error) {
 	u, err := url.Parse(pubUrl)
 	if err != nil {
-		log.Fatal(err)
 		return "", err
 	}
 	return u.Hostname(), err

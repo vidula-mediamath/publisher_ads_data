@@ -1,7 +1,6 @@
 package main
 
 import ("net/http"
-	"log"
 	"strings"
 	"errors"
 	"encoding/json"
@@ -24,7 +23,6 @@ func main(){
 func viewHandler(w http.ResponseWriter, r *http.Request) {
     responseData, err := getResponseFromDB(r.URL.Path, actualDBFunc)
     if err != nil {
-	    	log.Fatal(err)
 	    	w.Write([]byte("can not produce ads data for this publisher"))
         return
     }
@@ -44,7 +42,6 @@ func viewHandler(w http.ResponseWriter, r *http.Request) {
 	//convert to json
     jsonData, err := json.Marshal(httpResponse)   
 	if err != nil {
-        log.Fatal(err)
         	w.Write([]byte("can not produce ads data for this publisher"))
         return
     }
@@ -60,7 +57,12 @@ func viewHandler(w http.ResponseWriter, r *http.Request) {
 type DBReader func(pubName string) ([]storage.Record, error)
 
 func actualDBFunc(pubName string) ([]storage.Record, error) {
-    return storage.GetFromDB(pubName)
+	db, err := storage.NewPostgres()
+	defer db.Close()
+	if err != nil{
+		return nil, err
+	}
+    return db.DBQuery(pubName)
 }
 
 func getResponseFromDB(urlPath string, dbQueryFunc DBReader) ([]storage.Record, error) {
