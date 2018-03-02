@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strings"
 	"log"
-	"fmt"
+	//"fmt"
 	"sync"
 	//"golang.org/x/text/encoding"
 	//"golang.org/x/text/transform"
@@ -74,20 +74,16 @@ func ExecuteGetOnAdsPage(pubUrl string) ([]byte, error) {
 	if resp.Header.Get("Content-Type") != "" {
 		if !strings.Contains(resp.Header.Get("Content-Type"), "utf-8") {
 			receivedCharEncoding := strings.Split(resp.Header.Get("Content-Type"), ";")[1]
-			fmt.Println("receivedCharEncoding", receivedCharEncoding)
 			if !strings.Contains(receivedCharEncoding, "utf-8"){
 				usedEncoding := strings.Split(receivedCharEncoding, "charset=")[1]
-				fmt.Println("usedEncoding", usedEncoding)
 				cd, err := iconv.Open("utf-8", usedEncoding) // convert usedEncoding to utf8
 				if err != nil {
-					fmt.Println("iconv.Open failed!")
 					return nil, err
 				}
 				defer cd.Close()
 				
 				var converted []byte = make([]byte, 10000000)
-				decodedBody, inleft, err := cd.Conv(body, converted)
-				fmt.Println(inleft)
+				decodedBody, _, err := cd.Conv(body, converted)
 				return decodedBody, err			
 			}
 		}
