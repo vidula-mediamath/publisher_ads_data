@@ -10,9 +10,6 @@ import (
 	"log"
 	//"fmt"
 	"sync"
-	//"golang.org/x/text/encoding"
-	//"golang.org/x/text/transform"
-	"gopkg.in/iconv.v1"
 )
 
 func main() {
@@ -70,24 +67,6 @@ func ExecuteGetOnAdsPage(pubUrl string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	
-	if resp.Header.Get("Content-Type") != "" {
-		if !strings.Contains(resp.Header.Get("Content-Type"), "utf-8") {
-			receivedCharEncoding := strings.Split(resp.Header.Get("Content-Type"), ";")[1]
-			if !strings.Contains(receivedCharEncoding, "utf-8"){
-				usedEncoding := strings.Split(receivedCharEncoding, "charset=")[1]
-				cd, err := iconv.Open("utf-8", usedEncoding) // convert usedEncoding to utf8
-				if err != nil {
-					return nil, err
-				}
-				defer cd.Close()
-				
-				var converted []byte = make([]byte, 10000000)
-				decodedBody, _, err := cd.Conv(body, converted)
-				return decodedBody, err			
-			}
-		}
-	}	
 	return body, err
 }
 
