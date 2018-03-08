@@ -15,7 +15,7 @@ var testtable = []struct {
 
 func TestExecuteGetOnAdsPage(t *testing.T){
 	for _, tt := range testtable {
-		_,err := ExecuteGetOnAdsPage(tt.in)
+		_,err := executeGetOnAdsPage(tt.in)
 		if err != nil {
 			if tt.out == false{
 				continue	

@@ -14,7 +14,7 @@ var tables = []struct {
 
 func TestPublisherNameFunc(t *testing.T){
 	for _, table := range tables {
-		output,err := GetPublisherName(table.url)
+		output,err := getPublisherName(table.url)
 		if err != nil && table.expectedOutput != ""{
 			t.Error("test case failed for input ", table.url)
 			}else {
