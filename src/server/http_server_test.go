@@ -38,15 +38,11 @@ var testInputs = []struct {
 func TestEmptyResponses(t *testing.T){
 	for _,v := range testInputs{
 		responseData, err := getResponseFromDB(v.urlPath, fakeDbReturnEmpty)
-		if err != nil && v.expectedFail != true{
+		if err != nil {
 			t.Error(err)
-		}else{
-			t.Log(err)
 			continue
 		}
-		
-		//currently with given inputs, control never reaches this point
-		expectedOutput, _ := fakeDbReturnEmpty("abc")
+		expectedOutput := []storage.Record{}
 	
 		if compareLists(expectedOutput, responseData) != true {
 			t.Error("test failed when url path was", v.urlPath)

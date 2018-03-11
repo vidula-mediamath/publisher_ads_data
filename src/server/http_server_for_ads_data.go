@@ -66,9 +66,6 @@ func actualDBFunc(pubName string) ([]storage.Record, error) {
 }
 
 func getResponseFromDB(urlPath string, dbQueryFunc DBReader) ([]storage.Record, error) {
-    if !strings.Contains(urlPath, "view"){
-        return nil, errors.New("URL path doesn't contain view.")
-    }
     pubName := urlPath[6:]
     tableData, err := dbQueryFunc(pubName)
 	return tableData, err

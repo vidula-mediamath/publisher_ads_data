@@ -17,12 +17,10 @@ func TestPublisherNameFunc(t *testing.T){
 		output,err := GetPublisherName(table.url)
 		if err != nil && table.expectedOutput != ""{
 			t.Error("test case failed for input ", table.url)
-			}else {
-				continue
-		}
-		if output != table.expectedOutput {
+			}else 
+			{if output != table.expectedOutput {
 			t.Errorf("Function did not return expected publisher name for url %s got %s", table.url, output)
-		}
+			}
 	}	
 	
 }

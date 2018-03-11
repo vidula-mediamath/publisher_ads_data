@@ -10,15 +10,12 @@ import (
 	"log"
 	//"fmt"
 	"sync"
+	"regexp"
 )
 
 func main() {
-	db, err := storage.NewPostgres()
-	defer db.Close()
-	if err != nil{
-		return
-	}
 	var wg sync.WaitGroup
+	r, _ := regexp.Compile("^(([a-zA-Z]{1})|([a-zA-Z]{1}[a-zA-Z]{1})|([a-zA-Z]{1}[0-9]{1})|([0-9]{1}[a-zA-Z]{1})|([a-zA-Z0-9][a-zA-Z0-9-_]{1,61}[a-zA-Z0-9]))\\.([a-zA-Z]{2,}|[a-zA-Z0-9-]{2,30}\\.[a-zA-Z]{2,3})$")
 	urls := []string{"https://www.yahoo.com/ads.txt", "https://www.cnn.com/ads.txt", "http://www.nytimes.com/ads.txt", "https://www.nbc.com/ads.txt"}
 	for _, url := range urls {
 		// Increment the WaitGroup counter.
@@ -28,28 +25,33 @@ func main() {
 			// Decrement the counter when the goroutine completes.
 			defer wg.Done()
 			// Fetch the URL
-			pubName, err := GetPublisherName(url)
+			pubName, err := getPublisherName(url)
 			if err != nil {
+				log.Println(err)
 				return
 			}
-			body, err := ExecuteGetOnAdsPage(url)
+			body, err := executeGetOnAdsPage(url)
 			if err != nil {
+				log.Println(err)
 				return
 			}
-			records, err := ParseHttpResp(body)
+			records, err := parseHttpResp(body, r)
 			if err != nil {
+				log.Println(err)
 				return
 			}
-			dbInsertErrors := db.DBInsert(records, pubName)
-			log.Println(dbInsertErrors)
-			log.Println(err)
+			dbErr := storage.AddRecordsInDB(records, pubName)
+			if dbErr != nil {
+				log.Println(dbErr)
+				return
+			}
 		}(url)
 	}
 	wg.Wait()
 }
 
 //GetPublisherName retrieves the publisher domain from the urls so that later it can be used to store in the db
-func GetPublisherName(pubUrl string) (string, error) {
+func getPublisherName(pubUrl string) (string, error) {
 	u, err := url.Parse(pubUrl)
 	if err != nil {
 		return "", err
@@ -57,7 +59,7 @@ func GetPublisherName(pubUrl string) (string, error) {
 	return u.Hostname(), err
 }
 
-func ExecuteGetOnAdsPage(pubUrl string) ([]byte, error) {
+func executeGetOnAdsPage(pubUrl string) ([]byte, error) {
 	resp, err := http.Get(pubUrl)
 	if err != nil {
 		return nil, err
@@ -70,27 +72,39 @@ func ExecuteGetOnAdsPage(pubUrl string) ([]byte, error) {
 	return body, err
 }
 
-func ParseHttpResp(body []byte) ([]storage.Record, error) {
+func parseHttpResp(body []byte, r *Regexp) ([]storage.Record, error) {
 	var FileData []storage.Record
-	var s1 []string = strings.Split(string(body), "\n")
+	var lines []string = strings.Split(string(body), "\n")
 
-	for _, v := range s1 {
+	for _, line := range lines {
 		var record storage.Record
-		var splitBeforeComment []string = strings.Split(v, "#")
+		var splitBeforeComment []string = strings.Split(line, "#")
 
 		var splitOnEachComma []string = strings.Split(splitBeforeComment[0], ",")
+		
+		//validate record and its data
 		if len(splitOnEachComma) >= 3 {
-			domain, err := validateSupplyDomain(splitOnEachComma[0])
+			
+			//transform the data, TrimSpace and ToUpper
+			for i:=0; i<len(splitOnEachComma); i++{
+				splitOnEachComma[i] = strings.TrimSpace(splitOnEachComma[i])
+			}
+			splitOnEachComma[2] = strings.ToUpper(splitOnEachComma[2])
+			
+			//validate suuply domain value
+			if !r.MatchString(splitOnEachComma[0]) {
+				return errors.New("Invalid supply domain name")
+			}
+			//validate relation value
+			err := validateRelationValue(splitOnEachComma[2])
 			if err != nil {
 				continue
 			}
-			relation, err := validateRelationValue(splitOnEachComma[2])
-			if err != nil {
-				continue
-			}
-			record.Supply_source_domain = domain
-			record.Id = strings.TrimSpace(splitOnEachComma[1])
-			record.Relationship = relation
+			
+			//assign the parsed input values to record			
+			record.Supply_source_domain = splitOnEachComma[0]
+			record.Id = splitOnEachComma[1]
+			record.Relationship = strings.ToUpper(splitOnEachComma[2])
 
 			FileData = append(FileData, record)
 		}
@@ -98,23 +112,23 @@ func ParseHttpResp(body []byte) ([]storage.Record, error) {
 	return FileData, nil
 }
 
-func validateSupplyDomain(input string) (string, error) {
-	input = strings.TrimSpace(input)
-	if !strings.Contains(input, ".") {
-		return "", errors.New("Invalid supply domain name")
-	}
-	return input, nil
-}
+//func validateSupplyDomain(input string,) error {
+//	r, _ := regexp.Compile("^(([a-zA-Z]{1})|([a-zA-Z]{1}[a-zA-Z]{1})|([a-zA-Z]{1}[0-9]{1})|([0-9]{1}[a-zA-Z]{1})|([a-zA-Z0-9][a-zA-Z0-9-_]{1,61}[a-zA-Z0-9]))\\.([a-zA-Z]{2,}|[a-zA-Z0-9-]{2,30}\\.[a-zA-Z]{2,3})$")	
+//	if !r.MatchString(input) {
+//		return errors.New("Invalid supply domain name")
+//	}
+//	return nil
+//}
 
-func validateRelationValue(input string) (string, error) {
+func validateRelationValue(input string) error {
 	input = strings.TrimSpace(input)
 	input = strings.ToUpper(input)
 	switch input {
 	case "DIRECT":
-		return input, nil
+		return nil
 	case "RESELLER":
-		return input, nil
+		return nil
 	default:
-		return "", errors.New("Invalid relation value")
+		return errors.New("Invalid relation value")
 	}
 }
